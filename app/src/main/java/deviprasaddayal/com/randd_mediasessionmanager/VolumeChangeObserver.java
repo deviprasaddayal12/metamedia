@@ -26,9 +26,11 @@ public class VolumeChangeObserver extends ContentObserver {
         if (this.audioManager != null)
             previousVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         else
-            previousVolume = -1;
+            previousVolume = 0;
 
         this.onMediaMetaReceiveListener = onMediaMetaReceiveListener;
+
+        onMediaMetaReceiveListener.onMetaReceived(String.valueOf(previousVolume));
     }
 
     @Override
@@ -40,6 +42,6 @@ public class VolumeChangeObserver extends ContentObserver {
             currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         Log.i(TAG, "onChange: currentVolume = " + currentVolume);
 
-        onMediaMetaReceiveListener.onMetaReceived(String.format(Locale.getDefault(),"Current volume = %d", currentVolume));
+        onMediaMetaReceiveListener.onMetaReceived(String.valueOf(currentVolume));
     }
 }

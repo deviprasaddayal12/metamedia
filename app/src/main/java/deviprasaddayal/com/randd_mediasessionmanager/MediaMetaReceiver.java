@@ -44,7 +44,7 @@ public class MediaMetaReceiver extends BroadcastReceiver {
         } catch (Exception e){
             e.printStackTrace();
         }
-        onMediaMetaReceiveListener.onMetaReceived(String.format(Locale.getDefault(),"Current track = %s", path));
+        onMediaMetaReceiveListener.onMetaReceived(path);
     }
 
     /*

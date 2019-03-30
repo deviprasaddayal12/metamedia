@@ -9,14 +9,20 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = MainActivity.class.getSimpleName();
+
+    public static final int READ_STORAGE_PERMISSION = 123;
+    public static final String[] permissionReadStorage =  new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+    private boolean isPermissionGranted = false;
 
     private Handler handler;
 
@@ -24,7 +30,10 @@ public class MainActivity extends AppCompatActivity {
     private MediaMetaReceiver mediaMetaReceiver;
     private VolumeChangeObserver volumeChangeObserver;
 
-    private TextView tvTrack, tvVolume;
+    private TextView tvTrack, tvVolume, tvLog;
+
+    private String currentVolume = "";
+    private String currentFilePath = "No file found.";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvTrack = findViewById(R.id.tv_track);
         tvVolume = findViewById(R.id.tv_volume);
+        tvLog = findViewById(R.id.tv_log);
 
         mediaListenerService = new Intent(this, MedialListenerService.class);
         startService(mediaListenerService);
@@ -45,10 +55,8 @@ public class MainActivity extends AppCompatActivity {
         mediaMetaReceiver = new MediaMetaReceiver(new OnMediaMetaReceiveListener() {
             @Override
             public void onMetaReceived(String value) {
-                if (isPermissionGranted)
-                    tvTrack.setText(value);
-                else
-                    tvTrack.setText(R.string.grant_permission_prompt);
+                currentFilePath = value;
+                updateField();
             }
         });
         registerReceiver(mediaMetaReceiver, intentFilter);
@@ -57,11 +65,27 @@ public class MainActivity extends AppCompatActivity {
         volumeChangeObserver = new VolumeChangeObserver(handler, this, new OnMediaMetaReceiveListener() {
             @Override
             public void onMetaReceived(String value) {
-                tvVolume.setText(value);
+                currentVolume = value;
+                updateField();
             }
         });
         getContentResolver().registerContentObserver(android.provider.Settings.System.CONTENT_URI,
                 true, volumeChangeObserver);
+    }
+
+    private void updateField(){
+        String printText = "Current File Path: " + currentFilePath + ", Current Volume: " + currentVolume;
+
+        if (!isPermissionGranted)
+            printText = getString(R.string.grant_permission_prompt);
+
+        tvLog.setText(printText);
+        Log.i(TAG, printText);
+    }
+
+    private void clearFields(){
+        tvVolume.setText("");
+        tvTrack.setText("");
     }
 
     private void addIntentFilters(IntentFilter intentFilter){
@@ -92,25 +116,27 @@ public class MainActivity extends AppCompatActivity {
         stopService(mediaListenerService);
     }
 
-    public static final int READ_STORAGE_PERMISSION = 123;
-    public static final String[] permissionReadStorage =  new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
-    private boolean isPermissionGranted = false;
-
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissionReadStorage[0])) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Gallery Permission Needed")
-                        .setMessage("Easytrack needs to access your gallery.")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(MainActivity.this, permissionReadStorage, READ_STORAGE_PERMISSION);
-                            }
-                        }).create().show();
-            } else {
-                ActivityCompat.requestPermissions(this, permissionReadStorage, READ_STORAGE_PERMISSION);
+
+            isPermissionGranted = ContextCompat.checkSelfPermission(this,
+                    permissionReadStorage[0]) == PackageManager.PERMISSION_GRANTED;
+
+            if (!isPermissionGranted){
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissionReadStorage[0])) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Gallery Permission Needed")
+                            .setMessage("Easytrack needs to access your gallery.")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    //Prompt the user once explanation has been shown
+                                    ActivityCompat.requestPermissions(MainActivity.this, permissionReadStorage, READ_STORAGE_PERMISSION);
+                                }
+                            }).create().show();
+                } else {
+                    ActivityCompat.requestPermissions(this, permissionReadStorage, READ_STORAGE_PERMISSION);
+                }
             }
         } else {
             isPermissionGranted = true;

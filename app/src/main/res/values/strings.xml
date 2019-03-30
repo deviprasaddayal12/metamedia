@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">MetaMedia</string>
+    <string name="app_name">FileTracker</string>
     <string name="grant_permission_prompt">Please grant permission to read storage.</string>
 </resources>
