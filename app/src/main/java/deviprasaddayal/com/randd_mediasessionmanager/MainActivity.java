@@ -1,6 +1,7 @@
 package deviprasaddayal.com.randd_mediasessionmanager;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -8,7 +9,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -91,16 +92,25 @@ public class MainActivity extends AppCompatActivity {
         stopService(mediaListenerService);
     }
 
-    public static final int WRITE_STORAGE_PERMISSION = 123;
+    public static final int READ_STORAGE_PERMISSION = 123;
+    public static final String[] permissionReadStorage =  new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     private boolean isPermissionGranted = false;
+
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_STORAGE_PERMISSION);
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissionReadStorage[0])) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Gallery Permission Needed")
+                        .setMessage("Easytrack needs to access your gallery.")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                ActivityCompat.requestPermissions(MainActivity.this, permissionReadStorage, READ_STORAGE_PERMISSION);
+                            }
+                        }).create().show();
             } else {
-                isPermissionGranted = true;
+                ActivityCompat.requestPermissions(this, permissionReadStorage, READ_STORAGE_PERMISSION);
             }
         } else {
             isPermissionGranted = true;
@@ -109,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == WRITE_STORAGE_PERMISSION){
+        if (requestCode == READ_STORAGE_PERMISSION){
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 isPermissionGranted = true;
         }
