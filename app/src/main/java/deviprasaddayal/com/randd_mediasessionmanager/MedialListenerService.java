@@ -21,9 +21,7 @@ public class MedialListenerService extends NotificationListenerService {
 
     private MediaSessionManager mediaSessionManager;
     private MediaController mediaController;
-
     private MediaMetadata mediaMetadata;
-
     private ComponentName componentName;
 
     @Override
